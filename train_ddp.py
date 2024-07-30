@@ -52,9 +52,9 @@ import h5py
 import torch
 import cProfile
 import re
-import pynvml
+#import pynvml
 import socket
-import psutil
+#import psutil
 from pickle import dump
 import gc
 import random 
@@ -84,6 +84,8 @@ DECORRELATION_TIME = 49 # 9 days
 import json
 from ruamel.yaml import YAML
 from ruamel.yaml.comments import CommentedMap as ruamelDict
+
+HERE = os.path.dirname(os.path.abspath(__file__))
 
 def seed_everything(seed=42):
     random.seed(seed)
@@ -565,14 +567,14 @@ if __name__ == '__main__':
   parser.add_argument("--DECORRELATION_TIME", default=1, type=int)
   parser.add_argument("--prediction_length", default=49, type=int)
   parser.add_argument("--dt", default=1, type=int)
-  parser.add_argument("--yaml_config", default='./config/AFNO.yaml', type=str)
+  parser.add_argument("--yaml_config", default=os.path.join(HERE, 'config', 'AFNO.yaml'), type=str)
   parser.add_argument("--config", default='default', type=str)
   parser.add_argument("--enable_amp", action='store_true')
   parser.add_argument("--epsilon_factor", default = 0, type = float)
 
   args = parser.parse_args()
 
-  params = YParams("/lustre/orion/atm112/scratch/patrickfan/Regional_WF_FCNet/config/AFNO.yaml", args.config)
+  params = YParams(args.yaml_config, args.config)
 
   print ()
   params['epsilon_factor'] = args.epsilon_factor
@@ -595,7 +597,8 @@ if __name__ == '__main__':
   # torch.cuda.set_device(local_rank)
   # torch.backends.cudnn.benchmark = True
 
-  os.environ['MASTER_ADDR'] = str(os.environ['HOSTNAME'])
+  #os.environ['MASTER_ADDR'] = str(os.environ['HOSTNAME'])
+  os.environ['MASTER_ADDR'] = "frontier01313"
   os.environ['MASTER_PORT'] = "29500"
   os.environ['WORLD_SIZE'] = os.environ['SLURM_NTASKS']
   os.environ['RANK'] = os.environ['SLURM_PROCID']
@@ -619,6 +622,7 @@ if __name__ == '__main__':
   if  world_rank==0:
     if not os.path.isdir(expDir):
       os.makedirs(expDir)
+    if not os.path.isdir(os.path.join(expDir, 'training_checkpoints/')):
       os.makedirs(os.path.join(expDir, 'training_checkpoints/'))
 
   params['experiment_dir'] = os.path.abspath(expDir)
